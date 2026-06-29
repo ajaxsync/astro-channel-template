@@ -1,0 +1,56 @@
+---
+import ChannelLayout from '../../layouts/ChannelLayout.astro';
+import PostCard from '../../components/PostCard.astro';
+import PostReadingTools from '../../components/PostReadingTools.astro';
+import AccessGate from '../../components/AccessGate.astro';
+import { getCollection, render } from 'astro:content';
+import type { CollectionEntry } from 'astro:content';
+export interface Props {
+  post: CollectionEntry<'posts'>;
+}
+
+export async function getStaticPaths() {
+  const posts = await getCollection('posts');
+
+  return posts.map((post: CollectionEntry<'posts'>) => ({
+    params: { slug: post.id.replace(/\.md$/, '') },
+    props: { post },
+  }));
+}
+
+const { post } = Astro.props;
+const { Content } = await render(post);
+const { data } = post;
+const isProtected = data.draft || data.archived;
+const gateMode = data.draft ? 'drafts' : 'archive';
+const badge = data.draft ? 'draft' : data.archived ? 'archived' : undefined;
+---
+
+<ChannelLayout pageTitle={data.title}>
+  {
+    isProtected ? (
+      <AccessGate mode={gateMode}>
+        <div data-post-article>
+          <PostCard post={post} Content={Content} badge={badge} />
+        </div>
+        <PostReadingTools />
+      </AccessGate>
+    ) : (
+      <>
+        <div data-post-article>
+          <PostCard post={post} Content={Content} />
+        </div>
+        <PostReadingTools />
+      </>
+    )
+  }
+</ChannelLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('main-scroll-container');
+    if (container) {
+      container.scrollTop = 0;
+    }
+  });
+</script>

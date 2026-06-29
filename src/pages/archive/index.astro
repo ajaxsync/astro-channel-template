@@ -1,0 +1,29 @@
+---
+import ChannelLayout from '../../layouts/ChannelLayout.astro';
+import AccessGate from '../../components/AccessGate.astro';
+import PostFeed from '../../components/PostFeed.astro';
+import { getArchivedPosts, prepareGroupedPosts } from '../../utils/posts';
+
+const posts = await getArchivedPosts();
+const groupedPosts = await prepareGroupedPosts(posts);
+---
+
+<ChannelLayout pageTitle="归档">
+  <AccessGate mode="archive">
+    <PostFeed
+      groupedPosts={groupedPosts}
+      postsCount={posts.length}
+      emptyMessage="暂无归档文章"
+      badge="archived"
+    />
+  </AccessGate>
+</ChannelLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('main-scroll-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
+</script>

@@ -1,0 +1,58 @@
+---
+import Prism from 'prismjs';
+import 'prismjs/components/prism-javascript';
+import 'prismjs/components/prism-typescript';
+import 'prismjs/components/prism-bash';
+import 'prismjs/components/prism-json';
+import 'prismjs/components/prism-css';
+import 'prismjs/components/prism-markup';
+
+interface Props {
+  code: string;
+  language?: string;
+}
+
+const { code, language = 'javascript' } = Astro.props;
+
+const highlightedCode = Prism.highlight(
+  code.trim(),
+  Prism.languages[language] || Prism.languages.javascript,
+  language
+);
+---
+
+<div class="code-block-wrapper my-4">
+  <div class="flex items-center justify-between mb-2 px-4 py-2 bg-gray-800 rounded-t-lg">
+    <span class="text-xs font-medium text-gray-400 uppercase">{language}</span>
+    <button
+      class="copy-btn text-xs text-gray-400 hover:text-white transition-colors flex items-center gap-1"
+      data-code={code.trim()}
+    >
+      <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 16H6a2 2 0 01-2-2V6a2 2 0 012-2h8a2 2 0 012 2v2m-6 12h8a2 2 0 002-2v-8a2 2 0 00-2-2h-8a2 2 0 00-2 2v8a2 2 0 002 2z" />
+      </svg>
+      复制
+    </button>
+  </div>
+  <pre class="bg-gray-900 rounded-b-lg overflow-x-auto"><code class={`language-${language}`} set:html={highlightedCode}></code></pre>
+</div>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    document.querySelectorAll('.copy-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const code = btn.getAttribute('data-code');
+        if (code) {
+          navigator.clipboard.writeText(code);
+          const originalText = btn.innerHTML;
+          btn.innerHTML = `<svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" /></svg> 已复制`;
+          btn.classList.add('text-green-400');
+          setTimeout(() => {
+            btn.innerHTML = originalText;
+            btn.classList.remove('text-green-400');
+          }, 2000);
+        }
+      });
+    });
+  });
+</script>

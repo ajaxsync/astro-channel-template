@@ -1,0 +1,25 @@
+---
+import ChannelLayout from '../layouts/ChannelLayout.astro';
+import PostFeed from '../components/PostFeed.astro';
+import { getPublishedPosts, prepareGroupedPosts } from '../utils/posts';
+
+const posts = await getPublishedPosts();
+const groupedPosts = await prepareGroupedPosts(posts);
+---
+
+<ChannelLayout pageTitle="首页">
+  <PostFeed
+    groupedPosts={groupedPosts}
+    postsCount={posts.length}
+    emptyMessage="暂无消息，敬请期待"
+  />
+</ChannelLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('main-scroll-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
+</script>

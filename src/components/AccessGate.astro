@@ -1,0 +1,520 @@
+---
+import {
+  ACCESS_SESSION_TTL_MS,
+  ACCESS_STORAGE_KEYS,
+  DRAFT_PASSWORD_HASH,
+  PASSWORD_FREE_ATTEMPTS,
+  PASSWORD_LOCK_QUOTES,
+  PASSWORD_LOCK_SCHEDULE_MS,
+  PASSWORD_RETRY_QUOTES,
+} from '../config/access';
+
+interface Props {
+  mode: 'archive' | 'drafts';
+}
+
+const { mode } = Astro.props;
+const storageKey = ACCESS_STORAGE_KEYS[mode];
+const requirePassword = mode === 'drafts';
+const title = mode === 'archive' ? '访问归档' : '访问草稿';
+const description =
+  mode === 'archive'
+    ? '请完成验证以查看已归档文章'
+    : '请完成验证并输入密码以查看草稿';
+---
+
+<div
+  class="access-gate"
+  data-access-gate
+  data-storage-key={storageKey}
+  data-require-password={requirePassword ? 'true' : 'false'}
+  data-password-hash={DRAFT_PASSWORD_HASH}
+  data-session-ttl={ACCESS_SESSION_TTL_MS}
+  data-password-free-attempts={PASSWORD_FREE_ATTEMPTS}
+  data-password-lock-schedule={JSON.stringify(PASSWORD_LOCK_SCHEDULE_MS)}
+  data-password-lock-quotes={JSON.stringify(PASSWORD_LOCK_QUOTES)}
+  data-password-retry-quotes={JSON.stringify(PASSWORD_RETRY_QUOTES)}
+>
+  <div class="access-gate-form" data-gate-form>
+    <div class="access-gate-card">
+      <h2 class="access-gate-title">{title}</h2>
+      <p class="access-gate-desc">{description}</p>
+
+      <form data-gate-submit-form class="access-gate-fields">
+        <label class="access-gate-label">
+          <span class="access-gate-label-text">验证题</span>
+          <div class="access-gate-math">
+            <span data-gate-math-question class="access-gate-math-text">… + … = ?</span>
+            <input
+              type="number"
+              inputmode="numeric"
+              data-gate-math-answer
+              class="access-gate-input"
+              placeholder="答案"
+              required
+              autocomplete="off"
+            />
+          </div>
+        </label>
+
+        {requirePassword && (
+          <label class="access-gate-label">
+            <span class="access-gate-label-text">密码</span>
+            <input
+              type="password"
+              data-gate-password
+              class="access-gate-input access-gate-input-full"
+              placeholder="请输入密码"
+              required
+              autocomplete="current-password"
+            />
+          </label>
+        )}
+
+        <div class="access-gate-error hidden" data-gate-error role="alert">
+          <p data-gate-error-message class="access-gate-error-message"></p>
+          <p data-gate-error-countdown class="access-gate-error-countdown hidden"></p>
+        </div>
+
+        <button type="submit" class="access-gate-submit">确认</button>
+      </form>
+    </div>
+  </div>
+
+  <div class="access-gate-content hidden" data-gate-content>
+    <slot />
+  </div>
+</div>
+
+<style>
+  .access-gate-form.hidden,
+  .access-gate-content.hidden {
+    display: none;
+  }
+
+  .access-gate-card {
+    max-width: 20rem;
+    margin: 2rem auto;
+    padding: 1.25rem;
+    border-radius: 0.75rem;
+    background-color: var(--tg-bubble);
+    border: 1px solid var(--tg-border);
+    box-shadow: 0 4px 24px color-mix(in srgb, var(--tg-text) 8%, transparent);
+  }
+
+  .access-gate-title {
+    margin: 0 0 0.375rem;
+    font-size: 1rem;
+    font-weight: 600;
+    color: var(--tg-text);
+  }
+
+  .access-gate-desc {
+    margin: 0 0 1rem;
+    font-size: 0.8125rem;
+    line-height: 1.4;
+    color: var(--tg-text-secondary);
+  }
+
+  .access-gate-fields {
+    display: flex;
+    flex-direction: column;
+    gap: 0.875rem;
+  }
+
+  .access-gate-label {
+    display: flex;
+    flex-direction: column;
+    gap: 0.375rem;
+  }
+
+  .access-gate-label-text {
+    font-size: 0.75rem;
+    font-weight: 500;
+    color: var(--tg-text-secondary);
+  }
+
+  .access-gate-math {
+    display: flex;
+    align-items: center;
+    gap: 0.625rem;
+  }
+
+  .access-gate-math-text {
+    flex-shrink: 0;
+    font-size: 0.9375rem;
+    font-weight: 600;
+    color: var(--tg-text);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .access-gate-input {
+    width: 5rem;
+    padding: 0.5rem 0.625rem;
+    font-size: 0.9375rem;
+    border-radius: 0.5rem;
+    border: 1px solid var(--tg-border);
+    background-color: var(--tg-bg);
+    color: var(--tg-text);
+    outline: none;
+    transition: border-color 0.15s ease;
+  }
+
+  .access-gate-input-full {
+    width: 100%;
+  }
+
+  .access-gate-input:focus {
+    border-color: var(--tg-accent);
+  }
+
+  .access-gate-error {
+    margin: 0;
+    font-size: 0.8125rem;
+    color: #e53935;
+  }
+
+  .access-gate-error-message {
+    margin: 0;
+    line-height: 1.45;
+  }
+
+  .access-gate-error-countdown {
+    margin: 0.375rem 0 0;
+    font-weight: 500;
+  }
+
+  .access-gate-error-countdown.hidden {
+    display: none;
+  }
+
+  .access-gate-error.hidden {
+    display: none;
+  }
+
+  .access-gate-submit {
+    width: 100%;
+    padding: 0.5625rem 1rem;
+    font-size: 0.9375rem;
+    font-weight: 500;
+    border: none;
+    border-radius: 0.5rem;
+    cursor: pointer;
+    color: #ffffff;
+    background-color: var(--tg-accent);
+    transition: opacity 0.15s ease;
+  }
+
+  .access-gate-submit:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  .access-gate-submit:disabled:hover {
+    opacity: 0.5;
+  }
+
+  .access-gate-input:disabled {
+    opacity: 0.6;
+    cursor: not-allowed;
+  }
+
+  .access-gate-card.shake {
+    animation: access-gate-shake 0.4s ease;
+  }
+
+  @keyframes access-gate-shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    20%,
+    60% {
+      transform: translateX(-6px);
+    }
+    40%,
+    80% {
+      transform: translateX(6px);
+    }
+  }
+</style>
+
+<script>
+  type LockState = {
+    failCount: number;
+    lockUntil: number;
+    lockQuote?: string;
+  };
+
+  function pickRandomQuote(quotes: string[]) {
+    return quotes[Math.floor(Math.random() * quotes.length)];
+  }
+
+  function getPasswordLockDurationMs(
+    failCount: number,
+    freeAttempts: number,
+    lockSchedule: number[],
+  ): number | null {
+    if (failCount <= freeAttempts) {
+      return null;
+    }
+
+    const scheduleIndex = failCount - freeAttempts - 1;
+    const maxIndex = lockSchedule.length - 1;
+
+    if (scheduleIndex >= maxIndex) {
+      return lockSchedule[maxIndex];
+    }
+
+    return lockSchedule[scheduleIndex];
+  }
+
+  function initAccessGate(root: HTMLElement) {
+    const storageKey = root.dataset.storageKey!;
+    const requirePassword = root.dataset.requirePassword === 'true';
+    const passwordHash = root.dataset.passwordHash!;
+    const sessionTtl = Number(root.dataset.sessionTtl ?? 0);
+    const passwordFreeAttempts = Number(root.dataset.passwordFreeAttempts ?? 3);
+    const passwordLockSchedule = JSON.parse(
+      root.dataset.passwordLockSchedule ?? '[]',
+    ) as number[];
+    const passwordLockQuotes = JSON.parse(
+      root.dataset.passwordLockQuotes ?? '[]',
+    ) as string[];
+    const passwordRetryQuotes = JSON.parse(
+      root.dataset.passwordRetryQuotes ?? '[]',
+    ) as string[];
+    const lockStorageKey = `${storageKey}-lock`;
+
+    const formPanel = root.querySelector('[data-gate-form]') as HTMLElement;
+    const contentPanel = root.querySelector('[data-gate-content]') as HTMLElement;
+    const form = root.querySelector('[data-gate-submit-form]') as HTMLFormElement;
+    const questionEl = root.querySelector('[data-gate-math-question]') as HTMLElement;
+    const answerInput = root.querySelector('[data-gate-math-answer]') as HTMLInputElement;
+    const passwordInput = root.querySelector('[data-gate-password]') as HTMLInputElement | null;
+    const submitBtn = root.querySelector('.access-gate-submit') as HTMLButtonElement;
+    const errorEl = root.querySelector('[data-gate-error]') as HTMLElement;
+    const errorMessageEl = root.querySelector('[data-gate-error-message]') as HTMLElement;
+    const errorCountdownEl = root.querySelector('[data-gate-error-countdown]') as HTMLElement;
+    const card = root.querySelector('.access-gate-card') as HTMLElement;
+
+    let expectedSum = 0;
+    let lockTimer: ReturnType<typeof setInterval> | null = null;
+
+    const hashText = async (text: string) => {
+      const data = new TextEncoder().encode(text);
+      const hash = await crypto.subtle.digest('SHA-256', data);
+      return Array.from(new Uint8Array(hash))
+        .map((b) => b.toString(16).padStart(2, '0'))
+        .join('');
+    };
+
+    const getLockState = (): LockState => {
+      const raw = sessionStorage.getItem(lockStorageKey);
+      if (!raw) {
+        return { failCount: 0, lockUntil: 0 };
+      }
+
+      try {
+        const data = JSON.parse(raw) as Partial<LockState>;
+        return {
+          failCount: data.failCount ?? 0,
+          lockUntil: data.lockUntil ?? 0,
+          lockQuote: data.lockQuote,
+        };
+      } catch {
+        return { failCount: 0, lockUntil: 0 };
+      }
+    };
+
+    const saveLockState = (state: LockState) => {
+      sessionStorage.setItem(lockStorageKey, JSON.stringify(state));
+    };
+
+    const clearLockState = () => {
+      sessionStorage.removeItem(lockStorageKey);
+    };
+
+    const getRemainingLockSeconds = () => {
+      const { lockUntil } = getLockState();
+      return Math.max(0, Math.ceil((lockUntil - Date.now()) / 1000));
+    };
+
+    const isLocked = () => getRemainingLockSeconds() > 0;
+
+    const setFormDisabled = (disabled: boolean) => {
+      answerInput.disabled = disabled;
+      if (passwordInput) passwordInput.disabled = disabled;
+      submitBtn.disabled = disabled;
+    };
+
+    const hasAccess = () => {
+      const raw = sessionStorage.getItem(storageKey);
+      if (!raw) return false;
+
+      try {
+        const data = JSON.parse(raw) as { verified?: boolean; at?: number };
+        if (!data.verified) return false;
+        if (sessionTtl > 0 && Date.now() - (data.at ?? 0) > sessionTtl) {
+          sessionStorage.removeItem(storageKey);
+          return false;
+        }
+        return true;
+      } catch {
+        return false;
+      }
+    };
+
+    const unlock = () => {
+      sessionStorage.setItem(
+        storageKey,
+        JSON.stringify({ verified: true, at: Date.now() }),
+      );
+      clearLockState();
+      if (lockTimer) {
+        clearInterval(lockTimer);
+        lockTimer = null;
+      }
+      formPanel.classList.add('hidden');
+      contentPanel.classList.remove('hidden');
+    };
+
+    const showNotice = (message: string, countdownSeconds?: number) => {
+      errorMessageEl.textContent = message;
+      if (countdownSeconds !== undefined) {
+        errorCountdownEl.textContent = `请 ${countdownSeconds} 秒后再试`;
+        errorCountdownEl.classList.remove('hidden');
+      } else {
+        errorCountdownEl.textContent = '';
+        errorCountdownEl.classList.add('hidden');
+      }
+      errorEl.classList.remove('hidden');
+    };
+
+    const showError = (message: string, countdownSeconds?: number) => {
+      showNotice(message, countdownSeconds);
+      card.classList.remove('shake');
+      void card.offsetWidth;
+      card.classList.add('shake');
+    };
+
+    const clearError = () => {
+      errorMessageEl.textContent = '';
+      errorCountdownEl.textContent = '';
+      errorCountdownEl.classList.add('hidden');
+      errorEl.classList.add('hidden');
+    };
+
+    const newQuestion = () => {
+      const a = Math.floor(Math.random() * 18) + 3;
+      const b = Math.floor(Math.random() * 18) + 3;
+      expectedSum = a + b;
+      questionEl.textContent = `${a} + ${b} = ?`;
+      answerInput.value = '';
+    };
+
+    const startLockCountdown = (shakeOnStart = false) => {
+      setFormDisabled(true);
+      let shouldShake = shakeOnStart;
+      const state = getLockState();
+      const lockQuote =
+        state.lockQuote ?? pickRandomQuote(passwordLockQuotes);
+
+      if (!state.lockQuote) {
+        state.lockQuote = lockQuote;
+        saveLockState(state);
+      }
+
+      const tick = () => {
+        const remaining = getRemainingLockSeconds();
+        if (remaining <= 0) {
+          if (lockTimer) {
+            clearInterval(lockTimer);
+            lockTimer = null;
+          }
+          setFormDisabled(false);
+          clearError();
+          return;
+        }
+
+        if (shouldShake) {
+          showError(lockQuote, remaining);
+          shouldShake = false;
+        } else {
+          showNotice(lockQuote, remaining);
+        }
+      };
+
+      tick();
+      if (lockTimer) clearInterval(lockTimer);
+      lockTimer = setInterval(tick, 1000);
+    };
+
+    const applyPasswordFailure = () => {
+      const state = getLockState();
+      state.failCount += 1;
+
+      const lockMs = getPasswordLockDurationMs(
+        state.failCount,
+        passwordFreeAttempts,
+        passwordLockSchedule,
+      );
+
+      if (lockMs === null) {
+        saveLockState(state);
+        showError(pickRandomQuote(passwordRetryQuotes));
+        if (passwordInput) passwordInput.value = '';
+        return;
+      }
+
+      state.lockUntil = Date.now() + lockMs;
+      state.lockQuote = pickRandomQuote(passwordLockQuotes);
+      saveLockState(state);
+      if (passwordInput) passwordInput.value = '';
+      startLockCountdown(true);
+    };
+
+    if (hasAccess()) {
+      formPanel.classList.add('hidden');
+      contentPanel.classList.remove('hidden');
+      return;
+    }
+
+    newQuestion();
+
+    if (requirePassword && isLocked()) {
+      startLockCountdown();
+    }
+
+    form.addEventListener('submit', async (event) => {
+      event.preventDefault();
+      clearError();
+
+      if (requirePassword && isLocked()) {
+        startLockCountdown();
+        return;
+      }
+
+      const answer = Number.parseInt(answerInput.value.trim(), 10);
+      if (Number.isNaN(answer) || answer !== expectedSum) {
+        showError('验证题答案不正确，请重试');
+        newQuestion();
+        return;
+      }
+
+      if (requirePassword && passwordInput) {
+        const inputHash = await hashText(passwordInput.value);
+        if (inputHash !== passwordHash) {
+          applyPasswordFailure();
+          return;
+        }
+      }
+
+      unlock();
+    });
+  }
+
+  document.querySelectorAll('[data-access-gate]').forEach((el) => {
+    initAccessGate(el as HTMLElement);
+  });
+</script>

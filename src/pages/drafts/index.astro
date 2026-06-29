@@ -1,0 +1,29 @@
+---
+import ChannelLayout from '../../layouts/ChannelLayout.astro';
+import AccessGate from '../../components/AccessGate.astro';
+import PostFeed from '../../components/PostFeed.astro';
+import { getDraftPosts, prepareGroupedPosts } from '../../utils/posts';
+
+const posts = await getDraftPosts();
+const groupedPosts = await prepareGroupedPosts(posts);
+---
+
+<ChannelLayout pageTitle="草稿">
+  <AccessGate mode="drafts">
+    <PostFeed
+      groupedPosts={groupedPosts}
+      postsCount={posts.length}
+      emptyMessage="暂无草稿"
+      badge="draft"
+    />
+  </AccessGate>
+</ChannelLayout>
+
+<script>
+  document.addEventListener('DOMContentLoaded', () => {
+    const container = document.getElementById('main-scroll-container');
+    if (container) {
+      container.scrollTop = container.scrollHeight;
+    }
+  });
+</script>

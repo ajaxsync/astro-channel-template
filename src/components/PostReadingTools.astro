@@ -1,0 +1,215 @@
+---
+/** 文章详情页：阅读进度条、返回顶部、GitHub 风格目录 */
+---
+
+<div class="post-reading-tools" data-post-reading-tools>
+  <div class="reading-progress" aria-hidden="true">
+    <div class="reading-progress-bar" data-reading-progress-bar></div>
+  </div>
+
+  <div class="post-fab-group post-fab-group--left">
+    <a href="/" class="post-fab" aria-label="返回频道" title="返回频道">
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
+      </svg>
+    </a>
+  </div>
+
+  <div class="post-fab-group">
+    <button
+      type="button"
+      class="post-fab"
+      data-toc-toggle
+      aria-label="打开目录"
+      aria-expanded="false"
+      title="目录"
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+      </svg>
+    </button>
+
+    <button
+      type="button"
+      class="post-fab post-fab--top"
+      data-back-to-top
+      aria-label="返回顶部"
+      title="返回顶部"
+      hidden
+    >
+      <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+      </svg>
+    </button>
+  </div>
+
+  <div class="toc-backdrop" data-toc-backdrop hidden></div>
+
+  <aside class="toc-panel" data-toc-panel aria-label="文章目录" hidden>
+    <div class="toc-panel-header">
+      <h2 class="toc-panel-title">目录</h2>
+      <button type="button" class="toc-panel-close" data-toc-close aria-label="关闭目录">
+        <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+    <nav class="toc-panel-body scrollbar-visible">
+      <ul class="toc-list" data-toc-list></ul>
+      <p class="toc-empty" data-toc-empty hidden>暂无目录</p>
+    </nav>
+  </aside>
+</div>
+
+<script>
+  function slugify(text: string): string {
+    return text
+      .trim()
+      .toLowerCase()
+      .replace(/[^\w\u4e00-\u9fff\s-]/g, '')
+      .replace(/\s+/g, '-')
+      .replace(/-+/g, '-');
+  }
+
+  function initPostReadingTools() {
+    const root = document.querySelector('[data-post-reading-tools]');
+    const article = document.querySelector('[data-post-article]');
+    const mainScroll = document.getElementById('main-scroll-container');
+    if (!root || !article || !mainScroll) return;
+
+    const scrollContainer: HTMLElement = mainScroll;
+
+    const progressBar = root.querySelector('[data-reading-progress-bar]') as HTMLElement;
+    const backToTopBtn = root.querySelector('[data-back-to-top]') as HTMLButtonElement;
+    const tocToggle = root.querySelector('[data-toc-toggle]') as HTMLButtonElement;
+    const tocPanel = root.querySelector('[data-toc-panel]') as HTMLElement;
+    const tocBackdrop = root.querySelector('[data-toc-backdrop]') as HTMLElement;
+    const tocClose = root.querySelector('[data-toc-close]') as HTMLButtonElement;
+    const tocList = root.querySelector('[data-toc-list]') as HTMLUListElement;
+    const tocEmpty = root.querySelector('[data-toc-empty]') as HTMLElement;
+
+    const headings = Array.from(
+      article.querySelectorAll<HTMLElement>('h2, h3, h4')
+    );
+
+    const usedIds = new Set<string>();
+    headings.forEach((heading, index) => {
+      if (!heading.id) {
+        const base = slugify(heading.textContent ?? '') || `section-${index}`;
+        let id = base;
+        let n = 1;
+        while (usedIds.has(id) || document.getElementById(id)) {
+          id = `${base}-${n++}`;
+        }
+        heading.id = id;
+        usedIds.add(id);
+      } else {
+        usedIds.add(heading.id);
+      }
+    });
+
+    tocList.innerHTML = '';
+    if (headings.length === 0) {
+      tocEmpty.hidden = false;
+    } else {
+      tocEmpty.hidden = true;
+      headings.forEach((heading) => {
+        const level = Number(heading.tagName.charAt(1));
+        const li = document.createElement('li');
+        li.className = `toc-item toc-level-${level}`;
+
+        const link = document.createElement('a');
+        link.href = `#${heading.id}`;
+        link.textContent = heading.textContent?.trim() ?? '';
+        link.addEventListener('click', (e) => {
+          e.preventDefault();
+          const top =
+            heading.getBoundingClientRect().top -
+            scrollContainer.getBoundingClientRect().top +
+            scrollContainer.scrollTop -
+            12;
+          scrollContainer.scrollTo({ top: Math.max(0, top), behavior: 'smooth' });
+          closeToc();
+        });
+
+        li.appendChild(link);
+        tocList.appendChild(li);
+      });
+    }
+
+    function updateProgress() {
+      const { scrollTop, scrollHeight, clientHeight } = scrollContainer;
+      const max = scrollHeight - clientHeight;
+      const percent = max > 0 ? (scrollTop / max) * 100 : 0;
+      progressBar.style.width = `${Math.min(100, Math.max(0, percent))}%`;
+      backToTopBtn.hidden = scrollTop < 200;
+    }
+
+    function openToc() {
+      tocPanel.hidden = false;
+      tocBackdrop.hidden = false;
+      requestAnimationFrame(() => {
+        tocPanel.classList.add('is-open');
+        tocBackdrop.classList.add('is-open');
+      });
+      tocToggle.setAttribute('aria-expanded', 'true');
+    }
+
+    function closeToc() {
+      tocPanel.classList.remove('is-open');
+      tocBackdrop.classList.remove('is-open');
+      tocToggle.setAttribute('aria-expanded', 'false');
+      window.setTimeout(() => {
+        if (!tocPanel.classList.contains('is-open')) {
+          tocPanel.hidden = true;
+          tocBackdrop.hidden = true;
+        }
+      }, 200);
+    }
+
+    function updateActiveHeading() {
+      const containerTop = scrollContainer.getBoundingClientRect().top;
+      let activeId = '';
+      for (const heading of headings) {
+        if (heading.getBoundingClientRect().top - containerTop <= 32) {
+          activeId = heading.id;
+        }
+      }
+      tocList.querySelectorAll('a').forEach((link) => {
+        const anchor = link as HTMLAnchorElement;
+        anchor.classList.toggle('is-active', anchor.getAttribute('href') === `#${activeId}`);
+      });
+    }
+
+    scrollContainer.addEventListener('scroll', () => {
+      updateProgress();
+      updateActiveHeading();
+    }, { passive: true });
+
+    backToTopBtn.addEventListener('click', () => {
+      scrollContainer.scrollTo({ top: 0, behavior: 'smooth' });
+    });
+
+    tocToggle.addEventListener('click', () => {
+      if (tocPanel.classList.contains('is-open')) {
+        closeToc();
+      } else {
+        openToc();
+      }
+    });
+
+    tocClose.addEventListener('click', closeToc);
+    tocBackdrop.addEventListener('click', closeToc);
+
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape' && tocPanel.classList.contains('is-open')) {
+        closeToc();
+      }
+    });
+
+    updateProgress();
+    updateActiveHeading();
+  }
+
+  document.addEventListener('DOMContentLoaded', initPostReadingTools);
+</script>
