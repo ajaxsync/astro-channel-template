@@ -2,6 +2,7 @@
 import type { CollectionEntry } from 'astro:content';
 import type { AstroComponentFactory } from 'astro/runtime/server/index.js';
 import { formatMessageTime } from '../utils/date';
+import { withBase } from '../utils/url';
 import BubbleTail from './BubbleTail.astro';
 import ChannelAvatar from './ChannelAvatar.astro';
 
@@ -69,7 +70,7 @@ const formattedTime = formatMessageTime(data.publishedAt);
 
       <div class="tg-meta">
         <a
-          href={`/post/${slug}/`}
+          href={withBase(`/post/${slug}/`)}
           class="opacity-0 group-hover:opacity-100 hover:!opacity-100 mr-1"
           style="color: var(--tg-accent);"
           aria-label="permalink"

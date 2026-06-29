@@ -1,5 +1,6 @@
 ---
 /** 文章详情页：阅读进度条、返回顶部、GitHub 风格目录 */
+import { withBase } from '../utils/url';
 ---
 
 <div class="post-reading-tools" data-post-reading-tools>
@@ -8,7 +9,7 @@
   </div>
 
   <div class="post-fab-group post-fab-group--left">
-    <a href="/" class="post-fab" aria-label="返回频道" title="返回频道">
+    <a href={withBase('/')} class="post-fab" aria-label="返回频道" title="返回频道">
       <svg fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
         <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7" />
       </svg>

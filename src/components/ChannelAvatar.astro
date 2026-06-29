@@ -18,7 +18,7 @@ const interactiveClass =
 
 {
   variant === 'home' ? (
-    <a href="/" class="inline-flex flex-shrink-0 rounded-full" aria-label="返回首页">
+    <a href={import.meta.env.BASE_URL} class="inline-flex flex-shrink-0 rounded-full" aria-label="返回首页">
       <img
         src={channelConfig.avatarUrl}
         alt={channelConfig.name}

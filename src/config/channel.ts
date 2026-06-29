@@ -1,13 +1,15 @@
+import { withBase } from '../utils/url';
+
 export const channelConfig = {
   name: 'My Channel',
   username: 'my_channel',
-  avatarUrl: '/favicon.jpg',
+  avatarUrl: withBase('/favicon.jpg'),
   tagline: '分享技术与生活',
   description: '一个 Telegram 风格的静态频道模板',
   subscribers: 0,
   telegramUrl: 'https://t.me/my_channel',
   githubUrl: 'https://github.com/ajaxsync/astro-channel-template',
-  faviconUrl: '/favicon.png',
+  faviconUrl: withBase('/favicon.png'),
 } as const;
 
 export function formatCount(count: number): string {

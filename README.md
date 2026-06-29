@@ -109,7 +109,8 @@ archived: false # true → 仅 /archive/ 可见（需密码）
 │   ├── pages/
 │   ├── styles/
 │   └── utils/
-├── astro.config.mjs
+├── astro.config.mjs          # 站点 base（默认 /，Pages 由 CI 注入）
+├── .github/workflows/        # GitHub Pages 自动部署
 └── package.json
 ```
 
@@ -126,13 +127,39 @@ archived: false # true → 仅 /archive/ 可见（需密码）
 
 ## 部署
 
-构建输出目录为 `dist/`，可部署到任意静态托管平台：
+构建输出目录为 `dist/`。默认 `base` 为 `/`，本地开发与多数托管平台无需额外配置。
 
-- [Vercel](https://vercel.com)
-- [Netlify](https://netlify.com)
-- [Cloudflare Pages](https://pages.cloudflare.com)
+### GitHub Pages
+
+仓库已包含 `.github/workflows/static.yml`。从模板创建仓库后：
+
+1. 打开 **Settings → Pages → Build and deployment**
+2. **Source** 选择 **GitHub Actions**
+3. 将代码 push 到 `main` 分支，等待 Actions 完成
+
+Workflow 会根据仓库名自动设置路径：
+
+| 仓库类型 | 示例 | 访问地址 |
+|----------|------|----------|
+| 项目站 | `your-name/my-blog` | `https://your-name.github.io/my-blog/` |
+| 用户站 | `your-name/your-name.github.io` | `https://your-name.github.io/` |
+
+无需手动修改 `astro.config.mjs`。
+
+### 其他平台（Vercel / Netlify / Cloudflare Pages）
+
+直接部署即可，`base` 保持默认 `/`。
 
 以 Vercel 为例：导入 GitHub 仓库，Framework 选 Astro，Build Command 为 `pnpm build`，Output Directory 为 `dist`。
+
+### 手动指定站点路径
+
+如需本地预览 GitHub Pages 构建结果，可传入环境变量：
+
+```bash
+ASTRO_SITE=https://your-name.github.io ASTRO_BASE=/your-repo/ pnpm build
+pnpm preview
+```
 
 ## 从模板同步更新
 
